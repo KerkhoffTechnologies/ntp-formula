@@ -33,7 +33,9 @@
             'ntp_conf': '/etc/ntp.conf'
         },
     }, merge=salt['pillar.get']('ntp:ng:lookup')),
+
     'settings': salt['pillar.get']('ntp:ng:settings', {
+        'server': False,
         'ntpd': False,
         'ntp_conf': {
             'server': ['0.pool.ntp.org', '1.pool.ntp.org', '2.pool.ntp.org'],
@@ -42,3 +44,18 @@
         }
     }, merge=True)
 } %}
+
+{% if salt['pillar.get']('ntp:ng:settings:server') == True %}
+  {% for entry in salt['pillar.get']('ntp:server:settings:ntp_conf:restrict', []) %}
+    {% do ntp['settings']['ntp_conf']['restrict'].append(entry) %}
+  {% endfor %}
+{% endif %}
+
+{% if salt['pillar.get']('ntp:ng:settings:client') == True %}
+  {% do ntp['settings']['ntp_conf'].update({ 'server': []}) %}
+  {% for entry in salt['pillar.get']('ntp:client:settings:ntp_conf:server', []) %}
+    {% do ntp['settings']['ntp_conf']['server'].append(entry) %}
+  {% endfor %}
+{% endif %}
+
+#  do ntp.settings
